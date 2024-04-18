@@ -2,9 +2,9 @@ import mongoose, {Schema} from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const uesrSchema = new Schema(
+const userSchema = new Schema(
     {
-        username: {
+        userName: {
             type: String,
             required: true,
             unique: true,
@@ -19,7 +19,7 @@ const uesrSchema = new Schema(
             lowercase: true,
             trim: true,
         },
-        fullname: {
+        fullName: {
             type: String,
             required: true,
             index: true,
@@ -34,7 +34,7 @@ const uesrSchema = new Schema(
         },
         watchHistory: [
             {
-                type: Schema.type.ObjectId,
+                type: Schema.Types.ObjectId,
                 ref: "Video"
             }
         ],
@@ -48,18 +48,18 @@ const uesrSchema = new Schema(
     }, {timestamps: true}
 )
 
-uesrSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next) {
     if(!this.isModified("password")) return next();
 
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
-uesrSchema.methods.isPassowordCorrect = async function (password) {
+userSchema.methods.isPassowordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
-uesrSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function () {
     jwt.sign(
         {
             _id: this._id,
@@ -73,13 +73,13 @@ uesrSchema.methods.generateAccessToken = function () {
         }
     )
 }
-uesrSchema.methods.generateRefreshToken = function () {
+userSchema.methods.generateRefreshToken = function () {
     jwt.sign(
         {
             _id: this._id,
             email: this.email,
-            username: this.username,
-            fullname: this.fullname
+            userName: this.userName,
+            fullName: this.fullName
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
@@ -88,4 +88,4 @@ uesrSchema.methods.generateRefreshToken = function () {
     )
 }
 
-export const User = mongoose.model("User", uesrSchema)
+export const User = mongoose.model("User", userSchema)
